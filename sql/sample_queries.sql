@@ -1,4 +1,6 @@
 USE college;
+-- Show the relations in the database --
+SHOW TABLES;
 -- Select all columns from tables --
 SELECT * FROM Students;
 SELECT * FROM Courses;
@@ -159,3 +161,121 @@ GROUP BY
     s.lname
 HAVING
 	AVG(sct.total_student_mark) > 90;
+
+SELECT s.student_id,
+	   s.fname,
+	   s.lname,
+	   d.department_name
+FROM 
+	Students s
+INNER JOIN
+	Departments d ON d.department_id = s.department_id;
+
+SELECT c.course_code,
+	   c.course_name,
+	   d.department_name
+FROM 
+	Courses c
+INNER JOIN 
+	Departments d ON d.department_id = c.department_id;
+
+SELECT s.student_id,
+	   s.fname,
+	   s.lname,
+	   e.course_id ,
+	   c.course_name,
+	   d.department_id
+FROM 
+	Students s
+INNER JOIN 
+	Enrollment e ON e.student_id = s.student_id 
+INNER JOIN 
+	Departments d ON d.department_id = s.department_id
+INNER JOIN
+	Courses c ON e.course_id = c.course_id;
+
+SELECT s.student_id,
+	   s.fname,
+	   s.lname,
+	   a.mark,
+	   e.exam_type
+FROM
+	Students s
+INNER JOIN 
+	Attempt a ON a.student_id = s.student_id
+INNER JOIN 
+	Exams e ON e.exam_id = a.exam_id;
+
+-- Select specific data using Subqueries --
+SELECT s.student_id,
+	   s.fname,
+	   s.lname,
+	   a.mark
+FROM 
+	Students s
+INNER JOIN 
+	Attempt a ON a.student_id = s.student_id 
+WHERE a.mark =
+(
+SELECT MAX(a.mark)
+FROM Attempt a
+);
+
+SELECT s.student_id,
+	   s.fname,
+	   s.lname,
+	   a.mark
+FROM 
+	Students s
+INNER JOIN 
+	Attempt a ON a.student_id = s.student_id
+WHERE a.mark >
+(
+SELECT AVG(a.mark)
+FROM Attempt a
+);
+
+SELECT 
+    d.department_id, 
+    d.department_name,
+    COUNT(c.course_id) AS course_count
+FROM Departments d 
+INNER JOIN Courses c ON c.department_id = d.department_id 
+GROUP BY d.department_id, d.department_name
+HAVING COUNT(c.course_id) = (
+    SELECT MAX(course_count) 
+    FROM ( 
+        SELECT COUNT(course_id) AS course_count 
+        FROM Courses 
+        GROUP BY department_id
+    ) AS max_counts
+);
+
+SELECT 
+	s.student_id,
+	s.fname,
+	s.lname,
+	COUNT(c.course_id) AS course_count
+FROM Students s
+INNER JOIN Courses c ON c.department_id = s.department_id
+GROUP BY s.student_id, s.fname, s.lname
+HAVING COUNT(c.course_id) = (
+	SELECT MAX(course_count)
+	FROM(
+		SELECT COUNT(course_id) AS course_count
+		FROM Courses c2
+		INNER JOIN Students s2 ON c2.department_id = s2.department_id
+        GROUP BY s2.student_id
+	) AS max_counts
+);
+
+SELECT 
+	s.student_id,
+	s.fname,
+	s.lname,
+	c.course_code,
+	c.course_name
+FROM Students s
+INNER JOIN
+	Courses c ON c.department_id = s.department_id 
+WHERE  c.course_name IN ('Data Structures', 'Database Systems');
